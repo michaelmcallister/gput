@@ -1,8 +1,8 @@
 package main
 
 import (
-	"io"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"io"
 )
 
 func upload(uploader *s3manager.Uploader, bucket string, key string, file io.Reader) error {
@@ -13,7 +13,7 @@ func upload(uploader *s3manager.Uploader, bucket string, key string, file io.Rea
 	}
 
 	_, err := uploader.Upload(upParams)
-	if (err != nil) {
+	if err != nil {
 		return err
 	}
 

@@ -1,19 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/dustin/go-humanize"
 	"github.com/go-ini/ini"
 	flag "github.com/ogier/pflag"
 	"log"
-	"bufio"
 	"os"
 	"strconv"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
 type Config struct {
@@ -42,7 +42,6 @@ const DEFAULT_HOST string = "s3.amazonaws.com"
 const DEFAULT_QUIET bool = true
 const DEFAULT_PROGRESS bool = false
 
-
 func main() {
 	var cfg = ReadConfig()
 	client := GetUploader(cfg)
@@ -50,8 +49,8 @@ func main() {
 	err := upload(client, cfg.BUCKET, cfg.OBJECT_KEY, bufio.NewReader(os.Stdin))
 
 	if err != nil {
-                log.Fatal("Failed to Upload: ", err)
-        }
+		log.Fatal("Failed to Upload: ", err)
+	}
 }
 
 func ReadConfig() *Config {
@@ -65,7 +64,7 @@ func ReadConfig() *Config {
 	//default config
 	CHUNK_SIZE := fmt.Sprintf("%dMB", DEFAULT_CHUNK_SIZE)
 	conf := &Config{
-		HOST:		  DEFAULT_HOST,
+		HOST:             DEFAULT_HOST,
 		CONCURRENCY:      DEFAULT_CONCURRENCY,
 		S3_STORAGE_CLASS: DEFAULT_S3_STORAGE_CLASS,
 		MAX_RETRIES:      DEFAULT_MAX_RETRIES,
@@ -137,17 +136,17 @@ func ParseChunkSize(size string) int64 {
 }
 
 func GetUploader(cfg *Config) *s3manager.Uploader {
-        S3Config := &aws.Config{
+	S3Config := &aws.Config{
 		Region:      aws.String("ap-southeast-2"),
-                Endpoint:    aws.String(cfg.HOST),
-                Credentials: credentials.NewStaticCredentials(cfg.S3_KEY_ID, cfg.S3_SECRET, ""),
-        }
+		Endpoint:    aws.String(cfg.HOST),
+		Credentials: credentials.NewStaticCredentials(cfg.S3_KEY_ID, cfg.S3_SECRET, ""),
+	}
 
-        S3Service := s3.New(session.New(S3Config))
+	S3Service := s3.New(session.New(S3Config))
 
-        uploader := s3manager.NewUploaderWithClient(S3Service, func(u *s3manager.Uploader) {
-                u.PartSize = cfg.CHUNK_SIZE
-                u.Concurrency = cfg.CONCURRENCY
-        })
-        return uploader
+	uploader := s3manager.NewUploaderWithClient(S3Service, func(u *s3manager.Uploader) {
+		u.PartSize = cfg.CHUNK_SIZE
+		u.Concurrency = cfg.CONCURRENCY
+	})
+	return uploader
 }
